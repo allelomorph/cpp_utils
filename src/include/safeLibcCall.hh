@@ -2,18 +2,11 @@
 #define SAFELIBCCALL_HH
 
 
-// errnoname.c uses C99 designated initializers and must be compiled separately
-//   as C, then linked during C++ compilation
-extern "C" {
-#include "errnoname.h"
-}
-
-#include <cstring>    // strerror
-
 #include <functional>
-#include <stdexcept>  // runtime_error
+#include <stdexcept>     // runtime_error
 #include <string_view>
 #include <sstream>
+#include <system_error>  // error_condition, system_category
 
 
 /*
@@ -44,12 +37,16 @@ ReturnType safeLibcCall(FuncType&& libc_func,
     ReturnType retval { libc_func(params...) };
     if (is_failure(retval, errno)) {
         std::ostringstream msg;
-        msg << libc_func_name << ": ";
-        if (errno == 0)
-            msg << "failure without setting errno";
-        else
-            msg << errnoname(errno) << " - " << std::strerror(errno);
-        throw std::runtime_error(msg.str());
+        msg << libc_func_name;
+        if (errno == 0) {
+            msg << ": failure without setting errno";
+            throw std::runtime_error(msg.str());
+        } else {
+            const std::error_condition econd {
+                std::system_category().default_error_condition(errno) };
+            throw std::system_error(econd.value(), econd.category(),
+                                    msg.str());
+        }
     }
     return retval;
 }
@@ -63,12 +60,16 @@ ReturnType safeLibcCall(FuncType&& libc_func,
     ReturnType retval { libc_func(params...) };
     if (is_failure(retval)) {
         std::ostringstream msg;
-        msg << libc_func_name << ": ";
-        if (errno == 0)
-            msg << "failure without setting errno";
-        else
-            msg << errnoname(errno) << " - " << std::strerror(errno);
-        throw std::runtime_error(msg.str());
+        msg << libc_func_name;
+        if (errno == 0) {
+            msg << ": failure without setting errno";
+            throw std::runtime_error(msg.str());
+        } else {
+            const std::error_condition econd {
+                std::system_category().default_error_condition(errno) };
+            throw std::system_error(econd.value(), econd.category(),
+                                    msg.str());
+        }
     }
     return retval;
 }
@@ -82,12 +83,16 @@ void safeLibcCall(FuncType&& libc_func,
     libc_func(params...);
     if (is_failure(errno)) {
         std::ostringstream msg;
-        msg << libc_func_name << ": ";
-        if (errno == 0)
-            msg << "failure without setting errno";
-        else
-            msg << errnoname(errno) << " - " << std::strerror(errno);
-        throw std::runtime_error(msg.str());
+        msg << libc_func_name;
+        if (errno == 0) {
+            msg << ": failure without setting errno";
+            throw std::runtime_error(msg.str());
+        } else {
+            const std::error_condition econd {
+                std::system_category().default_error_condition(errno) };
+            throw std::system_error(econd.value(), econd.category(),
+                                    msg.str());
+        }
     }
 }
 
@@ -98,10 +103,10 @@ void safeLibcCall(FuncType&& libc_func,
     errno = 0;
     libc_func(params...);
     if (errno != 0) {
-        std::ostringstream msg;
-        msg << libc_func_name << ": " << errnoname(errno) <<
-            " - " << std::strerror(errno);
-        throw std::runtime_error(msg.str());
+        const std::error_condition econd {
+            std::system_category().default_error_condition(errno) };
+        throw std::system_error(econd.value(), econd.category(),
+                                libc_func_name);
     }
 }
 

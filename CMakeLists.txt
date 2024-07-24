@@ -1,6 +1,5 @@
-# newest features used: TBD
-# targeting cmake v3.16
-cmake_minimum_required(VERSION 3.16) #???
+# newest features used: see ${PROJECT_SOURCE_DIR}/src/CMakeLists.txt
+cmake_minimum_required(VERSION 3.19)
 
 project(SafeLibcCall
   VERSION 2.0
@@ -9,7 +8,7 @@ project(SafeLibcCall
   LANGUAGES C CXX
   )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(InSourceBuildGuard)
