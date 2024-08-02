@@ -1,4 +1,4 @@
-# UniformRandNumGen
+# typeName
 
 ## Description
-Simple templated class for random real number generation using Marsenne Twister.
+Function for printing name of any type as it would appear in compiler messages.
