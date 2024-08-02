@@ -1,7 +1,7 @@
 # newest features used: FetchContent v3.11, FetchContent_MakeAvailable v3.14
 cmake_minimum_required(VERSION 3.14)
 
-project(SafeLibcCall
+project(safeLibcCall
   VERSION 2.0
   DESCRIPTION "Templated C++ wrapper for glibc function calls to throw \
     failures by return and/or errno values as exceptions"
