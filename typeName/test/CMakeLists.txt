@@ -24,5 +24,5 @@ include(Catch)
 catch_discover_tests(unit_tests)
 
 add_custom_command(TARGET unit_tests POST_BUILD
-  COMMAND ctest -C $<CONFIGURATION> --output-on-failure
+  COMMAND ctest -C $<CONFIGURATION> --output-on-failure --verbose
 )

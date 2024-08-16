@@ -10,7 +10,7 @@
 TEST_CASE("C++ fundamental types",
           "[builtin]")
 {
-    SECTION("No modifiers")
+    SECTION("CV-unqualified")
     {
         SECTION("Integrals")
         {
@@ -62,27 +62,83 @@ TEST_CASE("C++ fundamental types",
             REQUIRE(typeName<long double>() == "long double");
         }
     }
+    SECTION("CV-qualified")
+    {
+        SECTION("`const` comes before type")
+        {
+            REQUIRE(typeName<const int>() == "const int");
+            REQUIRE(typeName<int const>() == "const int");
+        }
+        SECTION("`volatile` comes before type")
+        {
+            REQUIRE(typeName<volatile int>() == "volatile int");
+            REQUIRE(typeName<int volatile>() == "volatile int");
+        }
+        SECTION("`const` comes before `volatile`")
+        {
+            REQUIRE(typeName<const volatile int>() == "const volatile int");
+            REQUIRE(typeName<volatile const int>() == "const volatile int");
+        }
+    }
+    SECTION("Pointers")
+    {
+        SECTION("Asterisk(s) at end of type token")
+        {
+            REQUIRE(typeName<int*>() == "int*");
+            REQUIRE(typeName<int *>() == "int*");
+            REQUIRE(typeName<int**>() == "int**");
+            REQUIRE(typeName<int **>() == "int**");
+        }
+        SECTION("Const-qualifiers in [const] <type>* [const] order")
+        {
+            REQUIRE(typeName<const int*>() == "const int*");
+            REQUIRE(typeName<int* const>() == "int* const");
+            REQUIRE(typeName<const int* const>() == "const int* const");
+        }
+    }
+    SECTION("References")
+    {
+        SECTION("Ampersand(s) at end of type token")
+        {
+            REQUIRE(typeName<int&>() == "int&");
+            REQUIRE(typeName<int &>() == "int&");
+            REQUIRE(typeName<int&&>() == "int&&");
+            REQUIRE(typeName<int &&>() == "int&&");
+        }
+    }
 }
 
-/*
-// not sure why undefined function prototypes can be called below...
-int& foo_lref();
-int&& foo_rref();
-int foo_value();
+TEST_CASE("Output of `decltype`",
+          "[decltype]")
+{
+    SECTION("Local variables")
+    {
+        SECTION("C++ fundamental types")
+        {
+            int i {};
+            const int ci {};
 
-int main() {
-    int i {};
-    const int ci {};
+            REQUIRE(typeName<decltype(i)>() == "int");
+            REQUIRE(typeName<decltype(ci)>() == "const int");
 
-    std::cout << "decltype(i) is " << typeName<decltype(i)>() << '\n';
-    std::cout << "decltype((i)) is " << typeName<decltype((i))>() << '\n';
-    std::cout << "decltype(ci) is " << typeName<decltype(ci)>() << '\n';
-    std::cout << "decltype((ci)) is " << typeName<decltype((ci))>() << '\n';
-    std::cout << "decltype(static_cast<int&>(i)) is " << typeName<decltype(static_cast<int&>(i))>() << '\n';
-    std::cout << "decltype(static_cast<int&&>(i)) is " << typeName<decltype(static_cast<int&&>(i))>() << '\n';
-    std::cout << "decltype(static_cast<int>(i)) is " << typeName<decltype(static_cast<int>(i))>() << '\n';
-    std::cout << "decltype(foo_lref()) is " << typeName<decltype(foo_lref())>() << '\n';
-    std::cout << "decltype(foo_rref()) is " << typeName<decltype(foo_rref())>() << '\n';
-    std::cout << "decltype(foo_value()) is " << typeName<decltype(foo_value())>() << '\n';
+            SECTION("`decltype(())`")
+            {
+                REQUIRE(typeName<decltype((i))>() == "int&");
+                REQUIRE(typeName<decltype((ci))>() == "const int&");
+            }
+
+            SECTION("after static_cast")
+            {
+                REQUIRE(typeName<
+                        decltype(static_cast<int>(i))
+                        >() == "int");
+                REQUIRE(typeName<
+                        decltype(static_cast<int&>(i))
+                        >() == "int&");
+                REQUIRE(typeName<
+                        decltype(static_cast<int&&>(i))
+                        >() == "int&&");
+            }
+        }
+    }
 }
-*/
