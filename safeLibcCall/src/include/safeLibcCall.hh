@@ -106,7 +106,7 @@ void safeLibcCall(FuncType&& libc_func,
         const std::error_condition econd {
             std::system_category().default_error_condition(errno) };
         throw std::system_error(econd.value(), econd.category(),
-                                libc_func_name);
+                                libc_func_name.data());
     }
 }
 
