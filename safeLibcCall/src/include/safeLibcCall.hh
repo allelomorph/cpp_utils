@@ -7,6 +7,7 @@
 #include <string_view>
 #include <sstream>
 #include <system_error>  // error_condition, system_category
+#include <type_traits>   // invoke_result_t
 
 
 /*
@@ -29,10 +30,11 @@ class LibcErrTest : public std::function<bool(const int)> {};
 
 
 template<typename FuncType, typename ReturnType, typename ...ParamTypes>
-ReturnType safeLibcCall(FuncType&& libc_func,
+ReturnType safeLibcCall(const FuncType&& libc_func,
                         const std::string_view& libc_func_name,
                         const LibcRetErrTest<ReturnType>& is_failure,
-                        ParamTypes ...params) {
+                        ParamTypes ...params)
+{
     errno = 0;
     ReturnType retval { libc_func(params...) };
     if (is_failure(retval, errno)) {
@@ -52,10 +54,11 @@ ReturnType safeLibcCall(FuncType&& libc_func,
 }
 
 template<typename FuncType, typename ReturnType, typename ...ParamTypes>
-ReturnType safeLibcCall(FuncType&& libc_func,
+ReturnType safeLibcCall(const FuncType&& libc_func,
                         const std::string_view& libc_func_name,
                         const LibcRetTest<ReturnType>& is_failure,
-                        ParamTypes ...params) {
+                        ParamTypes ...params)
+{
     errno = 0;
     ReturnType retval { libc_func(params...) };
     if (is_failure(retval)) {
@@ -75,12 +78,14 @@ ReturnType safeLibcCall(FuncType&& libc_func,
 }
 
 template<typename FuncType, typename ...ParamTypes>
-void safeLibcCall(FuncType&& libc_func,
+auto safeLibcCall(const FuncType&& libc_func,
                   const std::string_view& libc_func_name,
                   const LibcErrTest& is_failure,
-                  ParamTypes ...params) {
+                  ParamTypes ...params) ->
+    std::invoke_result_t<FuncType, ParamTypes...>
+{
     errno = 0;
-    libc_func(params...);
+    auto retval { libc_func(params...) };
     if (is_failure(errno)) {
         std::ostringstream msg;
         msg << libc_func_name;
@@ -94,21 +99,24 @@ void safeLibcCall(FuncType&& libc_func,
                                     msg.str());
         }
     }
+    return retval;
 }
 
 template<typename FuncType, typename ...ParamTypes>
-void safeLibcCall(FuncType&& libc_func,
+auto safeLibcCall(const FuncType&& libc_func,
                   const std::string_view& libc_func_name,
-                  ParamTypes ...params) {
+                  ParamTypes ...params) ->
+    std::invoke_result_t<FuncType, ParamTypes...>
+{
     errno = 0;
-    libc_func(params...);
+    auto retval { libc_func(params...) };
     if (errno != 0) {
         const std::error_condition econd {
             std::system_category().default_error_condition(errno) };
         throw std::system_error(econd.value(), econd.category(),
                                 libc_func_name.data());
     }
+    return retval;
 }
-
 
 #endif  // SAFELIBCCALL_HH
