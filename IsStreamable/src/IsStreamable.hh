@@ -91,6 +91,12 @@ struct is_streamable :
     #if defined(__cpp_inline_variables)  // C++17+
 
 template<typename StreamT, typename T>
+inline constexpr bool is_input_streamable_v = is_input_streamable<StreamT, T>::value;
+
+template<typename StreamT, typename T>
+inline constexpr bool is_output_streamable_v = is_output_streamable<StreamT, T>::value;
+
+template<typename StreamT, typename T>
 inline constexpr bool is_streamable_v = is_streamable<StreamT, T>::value;
 
     #else  // no inline variables (C++14-)
