@@ -12,4 +12,7 @@ include(Getcmake_utils)
 
 include(PreventInSourceBuild)
 
-add_subdirectory(safe_libc_call)
+add_subdirectory(IsStreamable)
+add_subdirectory(safeLibcCall)
+add_subdirectory(typeName)
+add_subdirectory(UniformRandNumGen)
