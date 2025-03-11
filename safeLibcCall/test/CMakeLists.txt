@@ -1,7 +1,7 @@
 # TBD requires v3.X
 # cmake_minimum_required(VERSION 3.10)
 
-# should set _CATCH_VERSION_MAJOR
+# should set Catch2_VERSION_MAJOR
 include(GetCatch2)
 
 add_executable(unit_tests
@@ -14,7 +14,7 @@ target_link_libraries(unit_tests
 )
 target_compile_definitions(unit_tests
   PUBLIC
-    _CATCH_VERSION_MAJOR=${_CATCH_VERSION_MAJOR}
+    _CATCH_VERSION_MAJOR=${Catch2_VERSION_MAJOR}
 )
 
 # see https://github.com/catchorg/Catch2/blob/v3.4.0/docs/cmake-integration.md
