@@ -18,3 +18,11 @@ enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(test)
+
+if(PROJECT_IS_TOP_LEVEL)
+  include(AddDoxygen)
+  add_doxygen()
+
+  include(AddMkDocs)
+  add_mkdocs()
+endif()

@@ -13,3 +13,11 @@ include(Getcmake_utils)
 include(PreventInSourceBuild)
 
 add_subdirectory(src)
+
+if(PROJECT_IS_TOP_LEVEL)
+  include(AddDoxygen)
+  add_doxygen()
+
+  include(AddMkDocs)
+  add_mkdocs()
+endif()
