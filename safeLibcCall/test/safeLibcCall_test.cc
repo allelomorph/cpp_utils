@@ -1,11 +1,10 @@
-#if (_CATCH_VERSION_MAJOR == 3)
-  #include <catch2/catch_version_macros.hpp>               // CATCH_VERSION_MAJOR
-  #include <catch2/catch_test_macros.hpp>                  // TEST_CASE, SECTION, REQUIRE
-  #include <catch2/matchers/catch_matchers.hpp>            // REQUIRES_*THROW*
-  #include <catch2/matchers/catch_matchers_exception.hpp>  // Catch::Matchers::Message
-#elif (_CATCH_VERSION_MAJOR == 2)
-  #include <catch2/catch.hpp>
+#include <catch2/catch_version_macros.hpp>               // CATCH_VERSION_MAJOR
+#if (CATCH_VERSION_MAJOR != 3)
+  #error "tests currently only support Catch2 v3.x"
 #endif
+#include <catch2/catch_test_macros.hpp>                  // TEST_CASE, SECTION, REQUIRE
+#include <catch2/matchers/catch_matchers.hpp>            // REQUIRES_*THROW*
+#include <catch2/matchers/catch_matchers_exception.hpp>  // Catch::Matchers::Message
 
 #include "safeLibcCall.hh"
 
@@ -13,11 +12,7 @@
 #include <unistd.h>  // close, unlink
 
 
-#if (CATCH_VERSION_MAJOR > 2)
 using Catch::Matchers::Message;
-#else
-using Catch::Message;
-#endif
 
 #define _TFNAME "safeLibcCall_testfile"
 
@@ -53,6 +48,7 @@ TEST_CASE("Detection by return value or errno with LibcRetErrTest",
                 Message("open: No such file or directory")
                 );
         }
+
         SECTION("errno not set")
         {
             // TBD: find glibc func that fails only by retval
@@ -66,6 +62,7 @@ TEST_CASE("Detection by return value or errno with LibcRetErrTest",
             close(fd);
             unlink(_TFNAME);
         }
+
     }
     SECTION("Failure by errno")
     {

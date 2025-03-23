@@ -12,11 +12,19 @@ include(Getcmake_utils)
 
 include(PreventInSourceBuild)
 
-enable_testing()
+if(NOT COMMAND init_ctest)
+  include(InitCTest)
+endif()
+init_ctest(
+  MEMCHECK
+  MEMCHECK_FAILS_TEST
+  MEMCHECK_GENERATES_SUPPRESSIONS
+)
 
 add_subdirectory(src)
 add_subdirectory(test)
 
+#[[
 if(PROJECT_IS_TOP_LEVEL)
   include(AddDoxygen)
   add_doxygen()
@@ -24,3 +32,4 @@ if(PROJECT_IS_TOP_LEVEL)
   include(AddMkDocs)
   add_mkdocs()
 endif()
+]]
