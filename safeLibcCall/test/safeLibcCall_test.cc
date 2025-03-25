@@ -8,70 +8,80 @@
 
 #include "safeLibcCall.hh"
 
-#include <fcntl.h>   // open
-#include <unistd.h>  // close, unlink
 
+namespace {
+
+enum class ErrorIndication { None, Return, Errno, ReturnAndErrno };
+
+int _mockLibcFunc(const int test_retval, const int test_errno,
+                  const ErrorIndication fail_type) {
+    int retval {};
+    switch (fail_type) {
+    case ErrorIndication::Return:
+        retval = test_retval;
+        break;
+    case ErrorIndication::Errno:
+        errno = test_errno;
+        break;
+    case ErrorIndication::ReturnAndErrno:
+        retval = test_retval;
+        errno = test_errno;
+        break;
+    default:
+        break;
+    }
+    return retval;
+}
+
+}  // namespace
 
 using Catch::Matchers::Message;
-
-#define _TFNAME "safeLibcCall_testfile"
 
 TEST_CASE("Detection by return value or errno with LibcRetErrTest",
     "[LibcRetErrTest, retval, errno]")
 {
-    const LibcRetErrTest<int> open_test { [](const int ret, const int err) {
+    const LibcRetErrTest<int> ret_err_test { [](const int ret, const int err) {
         return (ret == -1 || err);
-    } };
-
-    const LibcRetErrTest<int> open_test_inverse_ret { [](const int ret, const int err) {
-        return (ret != -1 || err);
     } };
 
     SECTION("Success")
     {
-        int fd;
         REQUIRE_NOTHROW(
-            fd = safeLibcCall(open, "open", open_test,
-                              _TFNAME, O_RDONLY | O_CREAT)
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_err_test,
+                         0, 0, ErrorIndication::ReturnAndErrno)
             );
-        close(fd);
-        unlink(_TFNAME);
     }
     SECTION("Failure by return value")
     {
         SECTION("errno set")
         {
             REQUIRE_THROWS_MATCHES(
-                safeLibcCall(open, "open", open_test,
-                             "", O_RDONLY),
+                safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_err_test,
+                             -1, EINVAL, ErrorIndication::ReturnAndErrno),
                 std::system_error,
-                Message("open: No such file or directory")
+                Message("_mockLibcFunc: Invalid argument")
                 );
         }
 
         SECTION("errno not set")
         {
-            // TBD: find glibc func that fails only by retval
-            int fd {};
+            errno = 0;
             REQUIRE_THROWS_MATCHES(
-                fd = safeLibcCall(open, "open", open_test_inverse_ret,
-                                  _TFNAME, O_RDONLY | O_CREAT),
+                safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_err_test,
+                             -1, 0, ErrorIndication::Return),
                 std::runtime_error,
-                Message("open: failure without setting errno")
+                Message("_mockLibcFunc: failure without setting errno")
                 );
-            close(fd);
-            unlink(_TFNAME);
         }
 
     }
     SECTION("Failure by errno")
     {
-        // TBD: find glibc func that fails only by errno
         REQUIRE_THROWS_MATCHES(
-            safeLibcCall(open, "open", open_test_inverse_ret,
-                         "", O_RDONLY),
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_err_test,
+                         -1, EINVAL, ErrorIndication::ReturnAndErrno),
             std::system_error,
-            Message("open: No such file or directory")
+            Message("_mockLibcFunc: Invalid argument")
             );
     }
 }
@@ -79,46 +89,37 @@ TEST_CASE("Detection by return value or errno with LibcRetErrTest",
 TEST_CASE("Detection by return value with LibcRetTest",
     "[LibcRetTest, retval]")
 {
-    const LibcRetTest<int> open_test {
+    const LibcRetTest<int> ret_test {
         [](const int ret) { return (ret == -1); }
     };
 
     SECTION("Success")
     {
-        int fd;
         REQUIRE_NOTHROW(
-            fd = safeLibcCall(open, "open", open_test,
-                              _TFNAME, O_RDONLY | O_CREAT)
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_test,
+                         0, 0, ErrorIndication::ReturnAndErrno)
             );
-        close(fd);
-        unlink(_TFNAME);
     }
     SECTION("Failure")
     {
         SECTION("errno set")
         {
             REQUIRE_THROWS_MATCHES(
-                safeLibcCall(open, "open", open_test,
-                             "", O_RDONLY),
+                safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_test,
+                             -1, EINVAL, ErrorIndication::ReturnAndErrno),
                 std::system_error,
-                Message("open: No such file or directory")
+                Message("_mockLibcFunc: Invalid argument")
                 );
         }
         SECTION("errno not set")
         {
-            const LibcRetTest<int> open_test_inverse {
-                [](const int ret) { return (ret != -1); }
-            };
-
-            int fd {};
+            errno = 0;
             REQUIRE_THROWS_MATCHES(
-                fd = safeLibcCall(open, "open", open_test_inverse,
-                                  _TFNAME, O_RDONLY | O_CREAT),
+                safeLibcCall(_mockLibcFunc, "_mockLibcFunc", ret_test,
+                             -1, 0, ErrorIndication::Return),
                 std::runtime_error,
-                Message("open: failure without setting errno")
+                Message("_mockLibcFunc: failure without setting errno")
                 );
-            close(fd);
-            unlink(_TFNAME);
         }
     }
 }
@@ -126,28 +127,24 @@ TEST_CASE("Detection by return value with LibcRetTest",
 TEST_CASE("Detection by errno with LibcErrTest",
     "[LibcErrTest, errno]")
 {
-    const LibcErrTest open_test { [](const int err) {
+    const LibcErrTest err_test { [](const int err) {
         return (err);
     } };
 
     SECTION("Success")
     {
-        int fd;
         REQUIRE_NOTHROW(
-            fd = safeLibcCall(open, "open", open_test,
-                              _TFNAME, O_RDONLY | O_CREAT)
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc", err_test,
+                         0, 0, ErrorIndication::Errno)
             );
-
-        close(fd);
-        unlink(_TFNAME);
     }
     SECTION("Failure")
     {
         REQUIRE_THROWS_MATCHES(
-            safeLibcCall(open, "open", open_test,
-                         "", O_RDONLY),
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc", err_test,
+                         0, EINVAL, ErrorIndication::Errno),
             std::system_error,
-            Message("open: No such file or directory")
+            Message("_mockLibcFunc: Invalid argument")
             );
     }
 }
@@ -157,21 +154,18 @@ TEST_CASE("Detection by any non-zero errno with no test functor",
 {
     SECTION("Success")
     {
-        int fd;
         REQUIRE_NOTHROW(
-            fd = safeLibcCall(open, "open",
-                              _TFNAME, O_RDONLY | O_CREAT)
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc",
+                         0, 0, ErrorIndication::Errno)
             );
-        close(fd);
-        unlink(_TFNAME);
     }
     SECTION("Failure")
     {
         REQUIRE_THROWS_MATCHES(
-            safeLibcCall(open, "open",
-                         "", O_RDONLY),
+            safeLibcCall(_mockLibcFunc, "_mockLibcFunc",
+                         0, EINVAL, ErrorIndication::Errno),
             std::system_error,
-            Message("open: No such file or directory")
+            Message("_mockLibcFunc: Invalid argument")
             );
     }
 }
