@@ -24,7 +24,6 @@ init_ctest(
 add_subdirectory(src)
 add_subdirectory(test)
 
-#[[
 if(PROJECT_IS_TOP_LEVEL)
   include(AddDoxygen)
   add_doxygen()
@@ -32,4 +31,3 @@ if(PROJECT_IS_TOP_LEVEL)
   include(AddMkDocs)
   add_mkdocs()
 endif()
-]]
