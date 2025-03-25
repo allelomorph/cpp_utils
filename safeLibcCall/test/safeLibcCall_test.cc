@@ -52,7 +52,7 @@ TEST_CASE("Detection by return value or errno with LibcRetErrTest",
         SECTION("errno not set")
         {
             // TBD: find glibc func that fails only by retval
-            int fd;
+            int fd {};
             REQUIRE_THROWS_MATCHES(
                 fd = safeLibcCall(open, "open", open_test_inverse_ret,
                                   _TFNAME, O_RDONLY | O_CREAT),
@@ -110,7 +110,7 @@ TEST_CASE("Detection by return value with LibcRetTest",
                 [](const int ret) { return (ret != -1); }
             };
 
-            int fd;
+            int fd {};
             REQUIRE_THROWS_MATCHES(
                 fd = safeLibcCall(open, "open", open_test_inverse,
                                   _TFNAME, O_RDONLY | O_CREAT),
